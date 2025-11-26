@@ -6,8 +6,60 @@ import { Memory } from './types';
 import { interpretMemory } from './services/geminiService';
 import { PlusIcon, PhotoIcon, MusicalNoteIcon } from '@heroicons/react/24/outline';
 
+// Default memories for debugging/demo
+const DEFAULT_MEMORIES: Memory[] = [
+  {
+    id: 'default-1',
+    url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop',
+    description: "迷雾中的森林，仿佛隐藏着古老的秘密。",
+    timestamp: Date.now(),
+    x: 20,
+    y: 30,
+    scale: 1,
+    rotation: -5,
+    driftDuration: 20,
+    isAnalyzing: false,
+  },
+  {
+    id: 'default-2',
+    url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600&auto=format&fit=crop',
+    description: "快门按下的瞬间，时间便在这里停驻。",
+    timestamp: Date.now(),
+    x: 70,
+    y: 25,
+    scale: 1.1,
+    rotation: 10,
+    driftDuration: 18,
+    isAnalyzing: false,
+  },
+  {
+    id: 'default-3',
+    url: 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=600&auto=format&fit=crop',
+    description: "晨露微光，折射出这世界最纯净的模样。",
+    timestamp: Date.now(),
+    x: 40,
+    y: 70,
+    scale: 0.9,
+    rotation: -8,
+    driftDuration: 22,
+    isAnalyzing: false,
+  },
+  {
+    id: 'default-4',
+    url: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=600&auto=format&fit=crop',
+    description: "群山静默，守望着星河流转的永恒。",
+    timestamp: Date.now(),
+    x: 80,
+    y: 65,
+    scale: 1.2,
+    rotation: 5,
+    driftDuration: 25,
+    isAnalyzing: false,
+  },
+];
+
 const App: React.FC = () => {
-  const [memories, setMemories] = useState<Memory[]>([]);
+  const [memories, setMemories] = useState<Memory[]>(DEFAULT_MEMORIES);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -98,7 +150,7 @@ const App: React.FC = () => {
           />
         ))}
 
-        {/* Empty State / Instructional Text */}
+        {/* Empty State / Instructional Text (Only show if truly empty) */}
         {memories.length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <h1 className="text-4xl md:text-6xl font-serif text-white/80 tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] mb-4 animate-pulse">
