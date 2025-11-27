@@ -235,9 +235,13 @@ const App: React.FC = () => {
     
     lastMousePos.current = { x: e.clientX, y: e.clientY };
 
-    // Update rotation values (inverted X delta controls Y rotation, etc)
+    // Update rotation values
     // Sensitivity factor
     const sensitivity = 0.3;
+    
+    // Natural Direct Manipulation:
+    // Dragging Right (deltaX > 0) -> Increases RotationY -> Moves Scene Right
+    // Dragging Up (deltaY < 0) -> Increases RotationX -> Moves Scene Up
     rotationY.set(rotationY.get() + deltaX * sensitivity);
     rotationX.set(rotationX.get() - deltaY * sensitivity);
   };
