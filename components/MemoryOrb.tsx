@@ -117,13 +117,23 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
     >
       {/* 
          The Counter-Rotation Wrapper 
-         This div undoes the world rotation so the image stays flat to the screen.
+         This div undoes the world rotation so the image stays flat to the screen (billboarding).
+         To keep the image perfectly upright (gravity effect) regardless of sphere rotation,
+         we must apply the inverse rotations in the reverse order of the parent.
+         
+         Parent (App.tsx) order: RotateY(y) * RotateX(x)
+         Inverse Child order: RotateX(-x) * RotateY(-y)
       */}
       <MotionDiv
         style={{
           rotateX: inverseRotateX,
           rotateY: inverseRotateY,
           transformStyle: 'preserve-3d'
+        }}
+        transformTemplate={({ rotateX, rotateY }: { rotateX: string, rotateY: string }) => {
+          // Framer Motion passes the value of rotateX/Y from style (which are -worldX, -worldY)
+          // We compose them in the specific order to cancel the parent's Euler rotation.
+          return `rotateX(${rotateX}) rotateY(${rotateY})`;
         }}
         className="relative"
       >

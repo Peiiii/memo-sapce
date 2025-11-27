@@ -7,6 +7,9 @@ import { interpretMemory } from './services/geminiService';
 import { PlusIcon, ArrowsUpDownIcon } from '@heroicons/react/24/outline';
 import { motion, useSpring, useMotionValue } from 'framer-motion';
 
+// Cast motion.div to any to avoid type errors with transformTemplate
+const MotionDiv = motion.div as any;
+
 // Helper: Fibonacci Sphere Distribution
 // Distributes N points evenly on a sphere
 const getFibonacciPos = (index: number, total: number) => {
@@ -272,7 +275,7 @@ const App: React.FC = () => {
         style={{ perspective: '1200px' }} 
       >
         {/* The Rotatable World */}
-        <motion.div 
+        <MotionDiv 
           className="relative preserve-3d pointer-events-auto"
           style={{ 
             rotateX: smoothRotateX, 
@@ -280,6 +283,11 @@ const App: React.FC = () => {
             transformStyle: 'preserve-3d', 
             width: 0, 
             height: 0 
+          }}
+          // Enforce a specific rotation order: Rotate Y first, then Rotate X.
+          // This allows children to perfectly inverse this order (Un-Rotate X, then Un-Rotate Y).
+          transformTemplate={({ rotateX, rotateY }: { rotateX: any, rotateY: any }) => {
+            return `rotateY(${rotateY}) rotateX(${rotateX})`;
           }}
         >
           {memories.map((memory) => (
@@ -293,7 +301,7 @@ const App: React.FC = () => {
               onFocus={() => {}}
             />
           ))}
-        </motion.div>
+        </MotionDiv>
       </div>
 
       {/* Empty State Instructions */}
