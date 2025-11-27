@@ -4,7 +4,7 @@ import { AmbientBackground } from './components/AmbientBackground';
 import { MemoryOrb } from './components/MemoryOrb';
 import { Memory } from './types';
 import { interpretMemory } from './services/geminiService';
-import { PlusIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ArrowsUpDownIcon } from '@heroicons/react/24/outline';
 import { motion, useSpring, useMotionValue } from 'framer-motion';
 
 // Helper: Fibonacci Sphere Distribution
@@ -127,6 +127,7 @@ const DEFAULT_MEMORIES: Memory[] = RAW_MEMORY_DATA.map((data, index) => {
 const App: React.FC = () => {
   const [memories, setMemories] = useState<Memory[]>(DEFAULT_MEMORIES);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isGravityMode, setIsGravityMode] = useState(false);
   
   // 3D Sphere Interaction State
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,9 +145,7 @@ const App: React.FC = () => {
   // Responsive Radius
   useEffect(() => {
     const handleResize = () => {
-      // Increased multiplier to 0.48 for better separation
       const r = Math.min(window.innerWidth, window.innerHeight) * 0.48;
-      // Increased minimum radius to 350px
       setSphereRadius(Math.max(350, r)); 
     };
     handleResize();
@@ -181,7 +180,6 @@ const App: React.FC = () => {
 
       const id = uuidv4();
       const objectUrl = URL.createObjectURL(file);
-      // Use random position for new single additions to avoid recalculating everything
       const pos = getRandomPos();
 
       const memory: Memory = {
@@ -216,6 +214,11 @@ const App: React.FC = () => {
   const lastMousePos = useRef({ x: 0, y: 0 });
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    // Only trigger drag if we aren't clicking a button or interactable element
+    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) {
+        return;
+    }
+
     isDragging.current = true;
     lastMousePos.current = { x: e.clientX, y: e.clientY };
     if (containerRef.current) containerRef.current.style.cursor = 'grabbing';
@@ -233,7 +236,7 @@ const App: React.FC = () => {
     // Update rotation values
     const sensitivity = 0.3;
     
-    // Drag Right (deltaX > 0) -> Surface moves Right -> rotateY increases
+    // Drag Right (deltaX > 0) -> Surface moves Right -> rotateY increases (Direct Manipulation)
     rotationY.set(rotationY.get() + deltaX * sensitivity);
     // Drag Up (deltaY < 0) -> Surface moves Up -> rotateX increases (positive rotateX moves front up)
     rotationX.set(rotationX.get() - deltaY * sensitivity);
@@ -242,6 +245,13 @@ const App: React.FC = () => {
   const handlePointerUp = () => {
     isDragging.current = false;
     if (containerRef.current) containerRef.current.style.cursor = 'grab';
+    
+    // Note: Global gravity snapping is intentionally removed.
+    // The nebula's rotation remains where the user left it.
+  };
+
+  const toggleGravityMode = () => {
+    setIsGravityMode(prev => !prev);
   };
 
   return (
@@ -279,6 +289,7 @@ const App: React.FC = () => {
               radius={sphereRadius}
               worldRotationX={smoothRotateX}
               worldRotationY={smoothRotateY}
+              isGravityMode={isGravityMode}
               onFocus={() => {}}
             />
           ))}
@@ -300,10 +311,45 @@ const App: React.FC = () => {
 
       {/* Control Bar */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
-        <div 
-          className="flex items-center gap-4 bg-slate-900/60 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-          onClick={() => fileInputRef.current?.click()}
-        >
+        <div className="flex items-center gap-4 bg-slate-900/80 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+          
+          {/* Upload Button */}
+          <button 
+            className="flex flex-col items-center group"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="bg-white/10 p-3 rounded-full group-hover:bg-white/20 transition-colors border border-white/5">
+              <PlusIcon className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-[10px] text-white/40 mt-1">上传</span>
+          </button>
+          
+          <div className="w-px h-8 bg-white/10"></div>
+
+          {/* Gravity Toggle */}
+          <button 
+            onClick={toggleGravityMode}
+            className="flex flex-col items-center group"
+          >
+             <div className={`p-3 rounded-full transition-all duration-300 border ${isGravityMode ? 'bg-indigo-500/30 border-indigo-400/50 text-indigo-200 shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'bg-white/10 border-white/5 text-white/70 group-hover:bg-white/20'}`}>
+                <ArrowsUpDownIcon className="w-6 h-6" />
+             </div>
+             <span className={`text-[10px] mt-1 transition-colors ${isGravityMode ? 'text-indigo-300' : 'text-white/40'}`}>
+               {isGravityMode ? '重力' : '悬浮'}
+             </span>
+          </button>
+
+          <div className="w-px h-8 bg-white/10"></div>
+
+          {/* Status Text */}
+          <div className="flex flex-col items-start min-w-[80px]">
+             <span className="text-xs text-white/80 font-medium flex items-center gap-1">
+                Memory Space
+             </span>
+             <span className="text-[10px] text-white/40">{memories.length} 个记忆片段</span>
+          </div>
+          
+          {/* Hidden Input */}
           <input 
             type="file" 
             ref={fileInputRef}
@@ -312,22 +358,7 @@ const App: React.FC = () => {
             accept="image/*"
             onChange={handleFileUpload}
           />
-          
-          <button className="flex flex-col items-center group">
-            <div className="bg-white/20 p-3 rounded-full group-hover:bg-white/30 transition-colors">
-              <PlusIcon className="w-6 h-6 text-white" />
-            </div>
-          </button>
 
-          <div className="w-px h-8 bg-white/10 mx-2"></div>
-
-          <div className="flex flex-col items-start min-w-[100px]">
-             <span className="text-xs text-white/80 font-medium flex items-center gap-1">
-                唤醒记忆
-                <HandRaisedIcon className="w-3 h-3 text-white/50 animate-pulse" />
-             </span>
-             <span className="text-[10px] text-white/40">拖拽旋转 • {memories.length} 个片段</span>
-          </div>
         </div>
       </div>
 

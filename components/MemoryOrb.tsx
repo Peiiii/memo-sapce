@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Memory } from '../types';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 
@@ -10,6 +10,7 @@ interface MemoryOrbProps {
   radius: number;
   worldRotationX: any;
   worldRotationY: any;
+  isGravityMode: boolean;
   onFocus: (memory: Memory) => void;
 }
 
@@ -18,6 +19,7 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
   radius, 
   worldRotationX, 
   worldRotationY,
+  isGravityMode,
   onFocus 
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -31,6 +33,19 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
 
   const isDraggingRef = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
+
+  // Snap to nearest 360 degrees (vertical/upright equilibrium)
+  const snapToBalance = (val: number) => {
+    return Math.round(val / 360) * 360;
+  };
+
+  // Reset/Snap rotation when Gravity Mode is enabled
+  useEffect(() => {
+    if (isGravityMode) {
+      orbRotationX.set(snapToBalance(orbRotationX.get()));
+      orbRotationY.set(snapToBalance(orbRotationY.get()));
+    }
+  }, [isGravityMode, orbRotationX, orbRotationY]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
@@ -62,6 +77,12 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
     e.preventDefault();
     e.stopPropagation();
     (e.target as Element).releasePointerCapture(e.pointerId);
+
+    // If Gravity Mode is active, snap back to vertical balance when released
+    if (isGravityMode) {
+      orbRotationX.set(snapToBalance(orbRotationX.get()));
+      orbRotationY.set(snapToBalance(orbRotationY.get()));
+    }
   };
 
   // Calculate 3D Cartesian position from Spherical coordinates
