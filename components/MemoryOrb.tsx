@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Memory } from '../types';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 
 // Cast motion.div to any to avoid type errors with 'initial' prop in some environments
 const MotionDiv = motion.div as any;
@@ -22,6 +22,48 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   
+  // Local rotation state for "Planet Spin"
+  const orbRotationX = useMotionValue(0);
+  const orbRotationY = useMotionValue(0);
+  const springConfig = { damping: 20, stiffness: 120, mass: 0.5 };
+  const smoothOrbX = useSpring(orbRotationX, springConfig);
+  const smoothOrbY = useSpring(orbRotationY, springConfig);
+
+  const isDraggingRef = useRef(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingRef.current = true;
+    lastPos.current = { x: e.clientX, y: e.clientY };
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const deltaX = e.clientX - lastPos.current.x;
+    const deltaY = e.clientY - lastPos.current.y;
+    lastPos.current = { x: e.clientX, y: e.clientY };
+
+    // Standard rotation mapping (Direct Manipulation)
+    // Drag Right (deltaX > 0) -> Surface moves Right -> rotateY increases
+    orbRotationY.set(orbRotationY.get() + deltaX * 0.6);
+    // Drag Up (deltaY < 0) -> Surface moves Up -> rotateX increases (positive moves front up)
+    orbRotationX.set(orbRotationX.get() - deltaY * 0.6);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.target as Element).releasePointerCapture(e.pointerId);
+  };
+
   // Calculate 3D Cartesian position from Spherical coordinates
   const x = radius * Math.sin(memory.phi) * Math.cos(memory.theta);
   const y = radius * Math.cos(memory.phi);
@@ -65,7 +107,7 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
         className="relative"
       >
         <MotionDiv
-          className="relative flex items-center justify-center cursor-pointer group"
+          className="relative flex items-center justify-center group"
           initial={{ opacity: 0, scale: 0 }}
           animate={{ 
             opacity: 1, 
@@ -86,19 +128,29 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
             setIsHovered(true);
             onFocus(memory);
           }}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseLeave={() => {
+            // If dragging, don't collapse the orb when mouse slips out
+            if (!isDraggingRef.current) setIsHovered(false);
+          }}
         >
            {/* 
               Fixed width/height container to prevent layout thrashing.
               Visual size changes are handled purely by the parent motion.div scale.
+              
+              This container acts as the "Planet" that can be manually rotated.
            */}
-           <div 
-             className={`relative overflow-hidden rounded-full border-2 border-white/20 shadow-xl transition-colors duration-500 bg-slate-900 ${isHovered ? 'filter-none' : 'opacity-90'}`}
+           <MotionDiv 
+             className={`relative overflow-hidden rounded-full border-2 border-white/20 shadow-xl transition-colors duration-500 bg-slate-900 cursor-grab active:cursor-grabbing ${isHovered ? 'filter-none' : 'opacity-90'}`}
              style={{
                width: '140px',
                height: '140px',
-               boxShadow: isHovered ? '0 0 50px rgba(100, 200, 255, 0.4)' : '0 0 15px rgba(0,0,0,0.6)'
+               boxShadow: isHovered ? '0 0 50px rgba(100, 200, 255, 0.4)' : '0 0 15px rgba(0,0,0,0.6)',
+               rotateX: smoothOrbX,
+               rotateY: smoothOrbY,
              }}
+             onPointerDown={handlePointerDown}
+             onPointerMove={handlePointerMove}
+             onPointerUp={handlePointerUp}
            >
              {/* Glow Effect */}
              <div className={`absolute inset-0 bg-blue-500 rounded-full mix-blend-screen blur-xl transition-opacity duration-700 ${isHovered ? 'opacity-60' : 'opacity-10'}`}></div>
@@ -106,7 +158,7 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
               <img 
                 src={memory.url} 
                 alt="memory" 
-                className="relative w-full h-full object-cover z-10"
+                className="relative w-full h-full object-cover z-10 pointer-events-none"
                 draggable={false}
               />
               
@@ -116,7 +168,7 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
                   <div className="w-8 h-8 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
                 </div>
               )}
-            </div>
+            </MotionDiv>
 
             {/* Text Reveal - Counter-scale the text so it doesn't look gigantic relative to screen */}
             {isHovered && !memory.isAnalyzing && (

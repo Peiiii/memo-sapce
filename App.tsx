@@ -233,7 +233,9 @@ const App: React.FC = () => {
     // Update rotation values
     const sensitivity = 0.3;
     
+    // Drag Right (deltaX > 0) -> Surface moves Right -> rotateY increases
     rotationY.set(rotationY.get() + deltaX * sensitivity);
+    // Drag Up (deltaY < 0) -> Surface moves Up -> rotateX increases (positive rotateX moves front up)
     rotationX.set(rotationX.get() - deltaY * sensitivity);
   };
 
@@ -290,7 +292,7 @@ const App: React.FC = () => {
             记忆空间
           </h1>
           <p className="text-white/40 font-light tracking-wide text-lg max-w-md text-center">
-            拖拽以旋转记忆球体<br/>
+            拖拽以旋转空间，或拨动单个记忆星球<br/>
             上传你的照片，让它们在此刻凝结成诗
           </p>
         </div>
