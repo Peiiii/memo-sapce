@@ -27,84 +27,84 @@ const getRandomPos = () => ({
 const RAW_MEMORY_DATA = [
   {
     id: 'mem-sunset',
-    url: 'https://images.unsplash.com/photo-1495616811223-4d98c6e9d869?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop',
     description: "夕阳沉入地平线，带走了最后的喧嚣。",
     scale: 1.1,
     rotation: -5,
   },
   {
     id: 'mem-forest',
-    url: 'https://images.unsplash.com/photo-1448375240586-dfd8d395ea6c?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1511497584788-876760111969?q=80&w=600&auto=format&fit=crop',
     description: "深林的呼吸，是地球最古老的语言。",
     scale: 1,
     rotation: 5,
   },
   {
-    id: 'mem-city',
-    url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=600&auto=format&fit=crop',
+    id: 'mem-urban',
+    url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=600&auto=format&fit=crop',
     description: "城市灯火阑珊，藏着万千心事。",
     scale: 1.15,
     rotation: -8,
   },
   {
     id: 'mem-coffee',
-    url: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=600&auto=format&fit=crop',
     description: "时光在咖啡香气中变得缓慢而醇厚。",
     scale: 0.9,
     rotation: 12,
   },
   {
-    id: 'mem-ocean',
-    url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop',
+    id: 'mem-sea',
+    url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?q=80&w=600&auto=format&fit=crop',
     description: "海浪轻抚沙滩，抹去昨日的足迹。",
     scale: 1.2,
     rotation: 0,
   },
   {
     id: 'mem-stars',
-    url: 'https://images.unsplash.com/photo-1519681393784-d8e5b5a45742?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=600&auto=format&fit=crop',
     description: "在星尘的注视下，我们都是孩子。",
     scale: 1.05,
     rotation: -15,
   },
   {
     id: 'mem-book',
-    url: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600&auto=format&fit=crop',
     description: "文字搭建的城堡，比现实更永恒。",
     scale: 0.95,
     rotation: 8,
   },
   {
     id: 'mem-cat',
-    url: 'https://images.unsplash.com/photo-1533738363-b7f9aef128ce?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=600&auto=format&fit=crop',
     description: "柔软的注视，治愈了坚硬的世界。",
     scale: 1.0,
     rotation: -4,
   },
   {
     id: 'mem-rain',
-    url: 'https://images.unsplash.com/photo-1515524738708-327f6b0037a7?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=80&w=600&auto=format&fit=crop',
     description: "雨滴敲打窗棂，像一首未完的诗。",
     scale: 1.08,
     rotation: 6,
   },
   {
     id: 'mem-flower',
-    url: 'https://images.unsplash.com/photo-1490750967868-58cb75069ed6?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1460039230329-eb070fc6c77c?q=80&w=600&auto=format&fit=crop',
     description: "花开一瞬，却留下了整个春天的记忆。",
     scale: 0.92,
     rotation: -10,
   },
   {
     id: 'mem-snow',
-    url: 'https://images.unsplash.com/photo-1517299321609-52687d1bc555?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1548266652-99cf27701ced?q=80&w=600&auto=format&fit=crop',
     description: "世界纯白如初，掩盖了所有的来路。",
     scale: 1.02,
     rotation: 3,
   },
   {
     id: 'mem-night',
-    url: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=600&auto=format&fit=crop',
+    url: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?q=80&w=600&auto=format&fit=crop',
     description: "夜色温柔，收容了所有流浪的梦。",
     scale: 0.98,
     rotation: -6,
@@ -130,7 +130,7 @@ const App: React.FC = () => {
   
   // 3D Sphere Interaction State
   const containerRef = useRef<HTMLDivElement>(null);
-  const [sphereRadius, setSphereRadius] = useState(300);
+  const [sphereRadius, setSphereRadius] = useState(350);
   
   // Physics-based rotation
   const rotationX = useMotionValue(0);
@@ -144,9 +144,10 @@ const App: React.FC = () => {
   // Responsive Radius
   useEffect(() => {
     const handleResize = () => {
-      // Radius is roughly 40% of the smaller screen dimension for better visibility
-      const r = Math.min(window.innerWidth, window.innerHeight) * 0.4;
-      setSphereRadius(Math.max(300, r)); // Minimum 300px
+      // Increased multiplier to 0.48 for better separation
+      const r = Math.min(window.innerWidth, window.innerHeight) * 0.48;
+      // Increased minimum radius to 350px
+      setSphereRadius(Math.max(350, r)); 
     };
     handleResize();
     window.addEventListener('resize', handleResize);
