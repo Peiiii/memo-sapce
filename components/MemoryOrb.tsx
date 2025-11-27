@@ -165,37 +165,47 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
           }}
         >
            {/* 
-              Fixed width/height container to prevent layout thrashing.
-              Visual size changes are handled purely by the parent motion.div scale.
-              
-              This container acts as the "Planet" that can be manually rotated.
+              Glass Orb Container
+              - Uses transparent background and border
+              - Hover: Removes opacity dimming, enhances border slightly, removes reflection overlay for clarity
            */}
            <MotionDiv 
-             className={`relative overflow-hidden rounded-full border-2 border-white/20 shadow-xl transition-colors duration-500 bg-slate-900 cursor-grab active:cursor-grabbing ${isHovered ? 'filter-none' : 'opacity-90'}`}
+             className={`relative overflow-hidden rounded-full border transition-all duration-500 cursor-grab active:cursor-grabbing ${isHovered ? 'border-white/70 filter-none' : 'border-white/40 opacity-90'}`}
              style={{
                width: '140px',
                height: '140px',
-               boxShadow: isHovered ? '0 0 50px rgba(100, 200, 255, 0.4)' : '0 0 15px rgba(0,0,0,0.6)',
+               // Glassmorphism Shadow:
+               // 1. Drop shadow for depth (Cyan glow on hover)
+               // 2. Inset shadow white for thickness/rim
+               // 3. Inset shadow dark (subtle) for curvature
+               boxShadow: isHovered 
+                 ? '0 0 60px rgba(165, 243, 252, 0.5), inset 0 0 20px rgba(255,255,255,0.6)' 
+                 : '0 15px 35px rgba(0,0,0,0.2), inset 0 0 15px rgba(255,255,255,0.2)',
                rotateX: smoothOrbX,
                rotateY: smoothOrbY,
+               background: 'rgba(255, 255, 255, 0.05)', // Very subtle tint
+               backdropFilter: 'blur(2px)', // Adds to the glass feel
              }}
              onPointerDown={handlePointerDown}
              onPointerMove={handlePointerMove}
              onPointerUp={handlePointerUp}
            >
-             {/* Glow Effect */}
-             <div className={`absolute inset-0 bg-blue-500 rounded-full mix-blend-screen blur-xl transition-opacity duration-700 ${isHovered ? 'opacity-60' : 'opacity-10'}`}></div>
+             {/* Glass Reflection / Specular Highlight (Top Left) 
+                 - Fades out completely on hover to ensure image clarity
+             */}
+             <div className={`absolute inset-0 rounded-full bg-gradient-to-br from-white/40 via-transparent to-black/10 z-30 pointer-events-none mix-blend-overlay transition-opacity duration-500 ${isHovered ? 'opacity-0' : 'opacity-100'}`}></div>
 
               <img 
                 src={memory.url} 
                 alt="memory" 
-                className="relative w-full h-full object-cover z-10 pointer-events-none"
+                className="relative w-full h-full object-cover z-10 pointer-events-none transition-transform duration-700 ease-out"
+                style={{ transform: isHovered ? 'scale(1.1)' : 'scale(1.05)' }} // Slight scale to avoid edge bleeding
                 draggable={false}
               />
               
               {/* Loading / Analyzing Overlay */}
               {memory.isAnalyzing && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-40">
                   <div className="w-8 h-8 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
                 </div>
               )}
@@ -208,7 +218,7 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
                 animate={{ opacity: 1, y: 0, scale: 1.0 / HOVER_SCALE_MULTIPLIER }}
                 className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-72 text-center pointer-events-none z-[20000]"
               >
-                <div className="bg-slate-900/90 backdrop-blur-xl p-4 rounded-xl border border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+                <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl border border-white/20 shadow-[0_10px_40px_rgba(0,0,0,0.3)]">
                   <p className="text-white text-base font-serif italic leading-relaxed tracking-wider text-shadow-sm">
                     "{memory.description}"
                   </p>

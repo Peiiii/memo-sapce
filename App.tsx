@@ -22,10 +22,50 @@ const getFibonacciPos = (index: number, total: number) => {
   };
 };
 
-const getRandomPos = () => ({
-  theta: Math.random() * Math.PI * 2,
-  phi: Math.acos((Math.random() * 1.6) - 0.8),
-});
+// Calculate the spherical coordinates that correspond to the "Front" of the view
+// given the current world rotation.
+const getFrontAndCenterPos = (rotXDeg: number, rotYDeg: number) => {
+  // Convert to radians
+  const rotX = rotXDeg * Math.PI / 180;
+  const rotY = rotYDeg * Math.PI / 180;
+
+  // We want to find the local point (x,y,z) on the sphere that ends up at 
+  // View Space (0, 0, 1) (directly in front of camera) after the container's rotation.
+  // Container applies: RotateY(rotY) -> RotateX(rotX).
+  // To find the source point, we apply the inverse: RotateX(-rotX) -> RotateY(-rotY) to (0,0,1).
+
+  // 1. Un-rotate X (rotate (0,0,1) by -rotX around X-axis)
+  // y1 = sin(rotX)
+  // z1 = cos(rotX)
+  // x1 = 0
+  
+  // 2. Un-rotate Y (rotate (0, y1, z1) by -rotY around Y-axis)
+  // x2 = z1 * sin(-rotY) = cos(rotX) * -sin(rotY)
+  // y2 = y1 = sin(rotX)
+  // z2 = z1 * cos(-rotY) = cos(rotX) * cos(rotY)
+
+  const x = -Math.cos(rotX) * Math.sin(rotY);
+  const y = Math.sin(rotX);
+  const z = Math.cos(rotX) * Math.cos(rotY);
+
+  // Convert Cartesian (x, y, z) to Spherical (phi, theta) based on MemoryOrb's coordinate system:
+  // x = R * sin(phi) * cos(theta)
+  // y = R * cos(phi)  <-- Note: our system uses Y as the polar axis component
+  // z = R * sin(phi) * sin(theta)
+
+  // Calculate Phi
+  // y = cos(phi) => phi = acos(y)
+  // Clamp value to avoid NaN due to float precision
+  const clampedY = Math.max(-1, Math.min(1, y));
+  const phi = Math.acos(clampedY);
+
+  // Calculate Theta
+  // z = sin(phi)sin(theta), x = sin(phi)cos(theta)
+  // theta = atan2(z, x)
+  const theta = Math.atan2(z, x);
+
+  return { theta, phi };
+};
 
 const RAW_MEMORY_DATA = [
   {
@@ -175,6 +215,13 @@ const App: React.FC = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Capture current rotation state once for this batch
+    const currentRotX = rotationX.get();
+    const currentRotY = rotationY.get();
+    
+    // Calculate the "center/front" position based on rotation
+    const centerPos = getFrontAndCenterPos(currentRotX, currentRotY);
+
     const newMemories: Memory[] = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -183,15 +230,23 @@ const App: React.FC = () => {
 
       const id = uuidv4();
       const objectUrl = URL.createObjectURL(file);
-      const pos = getRandomPos();
+      
+      // Add a small random spread so multiple uploads don't overlap perfectly
+      // Spread +/- 0.3 radians (~17 degrees)
+      const spread = 0.3;
+      const theta = centerPos.theta + (Math.random() - 0.5) * spread;
+      let phi = centerPos.phi + (Math.random() - 0.5) * spread;
+      
+      // Clamp phi to avoid singularity issues at exact poles (0 or PI)
+      phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
 
       const memory: Memory = {
         id,
         url: objectUrl,
         description: "正在唤醒记忆...",
         timestamp: Date.now(),
-        theta: pos.theta,
-        phi: pos.phi,
+        theta: theta,
+        phi: phi,
         scale: 0.9 + Math.random() * 0.3,
         rotation: Math.random() * 30 - 15,
         driftSpeed: 10 + Math.random() * 10,
