@@ -220,6 +220,9 @@ const App: React.FC = () => {
 
     const newMemories: Memory[] = [];
 
+    // Golden Angle in radians (~137.5 degrees)
+    const GOLDEN_ANGLE = 2.39996;
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file.type.startsWith('image/')) continue;
@@ -227,16 +230,28 @@ const App: React.FC = () => {
       const id = uuidv4();
       const objectUrl = URL.createObjectURL(file);
       
-      const spread = 0.3;
-      const theta = centerPos.theta + (Math.random() - 0.5) * spread;
-      let phi = centerPos.phi + (Math.random() - 0.5) * spread;
-      phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
+      // Spiral Distribution Logic
+      // 0.35 spread multiplier gives a good spacing (approx 20 degrees per step at start)
+      const spreadMultiplier = 0.35;
+      const radius = spreadMultiplier * Math.sqrt(i);
+      const angle = i * GOLDEN_ANGLE;
+      
+      const dPhi = radius * Math.cos(angle);
+      const dTheta = radius * Math.sin(angle);
+      
+      let phi = centerPos.phi + dPhi;
+      // Clamp phi to avoid pole singularities
+      phi = Math.max(0.15, Math.min(Math.PI - 0.15, phi));
+      
+      // Correct theta for latitude distortion (1/sin(phi))
+      const thetaScale = 1 / Math.sin(phi);
+      const theta = centerPos.theta + dTheta * thetaScale;
 
       const memory: Memory = {
         id,
         url: objectUrl,
         description: "正在唤醒记忆...",
-        timestamp: Date.now(), // Newest timestamp
+        timestamp: Date.now(), 
         theta: theta,
         phi: phi,
         scale: 0.9 + Math.random() * 0.3,
@@ -370,28 +385,27 @@ const App: React.FC = () => {
               // offset > 0 = older (Background/Distance)
               // offset < 0 = newer (Foreground/Behind Camera)
               
-              // New Spiral / Helix Layout
-              const Z_SPACING = 700; 
-              const SPIRAL_RADIUS = 350; 
-              const ANGLE_STEP = 0.6; // ~35 degrees per step, avoids visual overlap
+              // New Spiral / Helix Layout (Golden Angle Vortex)
+              // Use Golden Angle (~137.5 deg) to prevent visual alignment/overlap of subsequent items
+              const GOLDEN_ANGLE = 2.39996; 
+              const Z_SPACING = 800; 
+              const SPIRAL_RADIUS = 380; 
 
               // Depth: Negative Z goes into the screen
               const z = -offset * Z_SPACING;
 
-              // Spiral Logic:
-              // We calculate the spiral position for the current index, 
-              // AND the spiral position for the focused index.
-              // We then subtract the focused position, so the focused item is always at (0,0) in XY space.
-              // This creates a "Corkscrew" camera effect where we travel through the tunnel.
-
-              const theta = index * ANGLE_STEP;
+              // Spiral Logic with Center Fix
+              // We calculate where each item is in the absolute spiral
+              const theta = index * GOLDEN_ANGLE;
               const absX = Math.cos(theta) * SPIRAL_RADIUS;
               const absY = Math.sin(theta) * SPIRAL_RADIUS;
 
-              const activeTheta = focusedIndex * ANGLE_STEP;
+              // We calculate where the FOCUSED item "would be" in that spiral
+              const activeTheta = focusedIndex * GOLDEN_ANGLE;
               const activeAbsX = Math.cos(activeTheta) * SPIRAL_RADIUS;
               const activeAbsY = Math.sin(activeTheta) * SPIRAL_RADIUS;
 
+              // We shift the entire world so the focused item is at (0,0)
               const x = absX - activeAbsX;
               const y = absY - activeAbsY;
 
@@ -400,15 +414,15 @@ const App: React.FC = () => {
               // Visual Attributes based on distance from focus
               const dist = Math.abs(offset);
               
-              // Scale down items in the distance, but keep the active one prominent
-              const scale = offset === 0 ? 1.4 : Math.max(0.6, 1 - dist * 0.05);
+              // Scale Logic: Center item is largest. Distance fades slightly.
+              const scale = offset === 0 ? 1.4 : Math.max(0.6, 1.2 - dist * 0.1);
               
               // Fade out items that are very far OR behind the camera (negative offset)
               let opacity = 1;
               if (offset < 0) {
-                 opacity = Math.max(0, 1 + offset * 0.4); // Fade out as they go "behind" us
+                 opacity = Math.max(0, 1 + offset * 0.4); // Fade out quickly if "behind" us
               } else {
-                 opacity = Math.max(0, 1 - offset * 0.12); // Fade out into the deep distance
+                 opacity = Math.max(0, 1 - offset * 0.15); // Fade out into the deep distance
               }
 
               const blur = dist * 2; // Depth of field blur
@@ -416,7 +430,7 @@ const App: React.FC = () => {
               galleryAttrs = {
                 x, y, z, rotateY, scale, opacity, blur, 
                 isActive: offset === 0,
-                side: x > 0 ? 'right' : 'left' // Put text on the outer side
+                side: x > 0 ? 'right' : 'left' // Put text on the outer side for readability
               };
             }
 
@@ -455,7 +469,7 @@ const App: React.FC = () => {
 
       {/* Gallery Navigation Buttons (Right Side) */}
       {viewMode === 'gallery' && sortedMemories.length > 0 && (
-        <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-50 pointer-events-auto">
+        <div className="absolute right-8 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-4 z-50 pointer-events-auto">
           <button 
             onClick={() => navigateGallery('prev')}
             disabled={focusedIndex === 0}
