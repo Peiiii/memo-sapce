@@ -255,10 +255,9 @@ export class MemoryManager {
     useCommonStore.getState().setMemories(memories);
   };
 
-  handleFileUpload = async (files: FileList | null, currentRotation: { x: number; y: number }) => {
+  handleFileUpload = async (files: FileList | null, center: { theta: number; phi: number }) => {
     if (!files || files.length === 0) return;
 
-    const centerPos = this.getFrontAndCenterPos(currentRotation.x, currentRotation.y);
     const newMemories: Memory[] = [];
     const GOLDEN_ANGLE = 2.39996;
 
@@ -276,11 +275,11 @@ export class MemoryManager {
       const dPhi = radius * Math.cos(angle);
       const dTheta = radius * Math.sin(angle);
       
-      let phi = centerPos.phi + dPhi;
+      let phi = center.phi + dPhi;
       phi = Math.max(0.15, Math.min(Math.PI - 0.15, phi));
       
       const thetaScale = 1 / Math.sin(phi);
-      const theta = centerPos.theta + dTheta * thetaScale;
+      const theta = center.theta + dTheta * thetaScale;
 
       const memory: Memory = {
         id,
@@ -317,21 +316,6 @@ export class MemoryManager {
   private getFibonacciPos = (index: number, total: number) => {
     const phi = Math.acos(1 - 2 * (index + 0.5) / total);
     const theta = Math.PI * (1 + Math.sqrt(5)) * index;
-    return { theta, phi };
-  };
-
-  private getFrontAndCenterPos = (rotXDeg: number, rotYDeg: number) => {
-    const rotX = rotXDeg * Math.PI / 180;
-    const rotY = rotYDeg * Math.PI / 180;
-  
-    const x = -Math.cos(rotX) * Math.sin(rotY);
-    const y = Math.sin(rotX);
-    const z = Math.cos(rotX) * Math.cos(rotY);
-  
-    const clampedY = Math.max(-1, Math.min(1, y));
-    const phi = Math.acos(clampedY);
-    const theta = Math.atan2(z, x);
-  
     return { theta, phi };
   };
 

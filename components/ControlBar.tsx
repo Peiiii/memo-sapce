@@ -80,7 +80,7 @@ export const ControlBar: React.FC = () => {
           className="hidden" 
           multiple 
           accept="image/*"
-          onChange={(e) => presenter.memoryManager.handleFileUpload(e.target.files, presenter.sphereManager.getRotation())}
+          onChange={(e) => presenter.memoryManager.handleFileUpload(e.target.files, presenter.sphereManager.getCenterCoordinates())}
         />
 
       </div>

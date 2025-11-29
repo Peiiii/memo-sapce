@@ -19,7 +19,7 @@ export interface OrbVisualProps {
   rotateY: number | MotionValue<number>;
   scale: number | MotionValue<number>;
   opacity: number | MotionValue<number>;
-  zIndex: number;
+  zIndex: number | MotionValue<number>;
   
   // Visual Props
   isActive?: boolean;
@@ -27,6 +27,9 @@ export interface OrbVisualProps {
   filter?: string | MotionValue<string>;
   pointerEvents?: string | MotionValue<string>;
   
+  // Advanced Rotation for Sphere Mode
+  billboardMatrix?: MotionValue<string>;
+
   // Events
   onPointerDown?: (e: React.PointerEvent) => void;
   onPointerMove?: (e: React.PointerEvent) => void;
@@ -43,6 +46,7 @@ export const Orb: React.FC<OrbVisualProps> = ({
   id, url, description, timestamp,
   x, y, z, rotateX, rotateY, scale, opacity, zIndex,
   isActive, side, filter, pointerEvents,
+  billboardMatrix,
   onPointerDown, onPointerMove, onPointerUp, onMouseEnter, onMouseLeave, onClick,
   cursor
 }) => {
@@ -59,11 +63,19 @@ export const Orb: React.FC<OrbVisualProps> = ({
       onClick={onClick}
     >
       <MotionDiv
-        style={{
+        style={billboardMatrix ? {
+          transform: billboardMatrix, // Apply inverse world rotation first to face camera
+          rotateX, // Then apply local tilts (gravity/drag)
+          rotateY,
+          transformStyle: 'preserve-3d'
+        } : {
           rotateX,
           rotateY,
           transformStyle: 'preserve-3d'
         }}
+        transformTemplate={billboardMatrix ? 
+          ({ transform, rotateX, rotateY }: any) => `${transform} rotateX(${rotateX}) rotateY(${rotateY})` 
+          : undefined}
         className="relative"
       >
         <MotionDiv

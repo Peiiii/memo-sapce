@@ -3,6 +3,7 @@ import { motion, useSpring } from 'framer-motion';
 import { usePresenter } from '../../hooks/usePresenter';
 import { useCommonStore } from '../../stores/commonStore';
 import { SphereOrb } from './SphereOrb';
+import { VisualSphere } from './VisualSphere';
 
 const MotionDiv = motion.div as any;
 
@@ -11,9 +12,11 @@ export const SphereView: React.FC = () => {
   const { memories } = useCommonStore();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const springConfig = { damping: 20, stiffness: 100, mass: 1 };
-  const smoothRotateX = useSpring(presenter.sphereManager.rotationX, springConfig);
-  const smoothRotateY = useSpring(presenter.sphereManager.rotationY, springConfig);
+  // We use the raw matrix string now
+  const transformMatrix = presenter.sphereManager.transformMatrix;
+  const transformMatrixRaw = presenter.sphereManager.transformMatrixRaw;
+  const inverseMatrix = presenter.sphereManager.inverseMatrix;
+  
   const smoothScale = useSpring(presenter.sphereManager.sphereScale, { damping: 20, stiffness: 120 });
 
   // Drag Handlers for World Rotation
@@ -69,21 +72,21 @@ export const SphereView: React.FC = () => {
       <MotionDiv 
         className="relative preserve-3d"
         style={{ 
-          rotateX: smoothRotateX, 
-          rotateY: smoothRotateY,
+          transform: transformMatrix, // Now driving rotation via CSS Matrix
           scale: smoothScale,
           transformStyle: 'preserve-3d', 
           width: 0, 
           height: 0 
         }}
-        transformTemplate={({ rotateX, rotateY, scale }: any) => `scale(${scale}) rotateY(${rotateY}) rotateX(${rotateX})`}
       >
+        <VisualSphere />
+        
         {memories.map((memory) => (
            <SphereOrb 
              key={memory.id} 
              memory={memory} 
-             worldRotationX={smoothRotateX}
-             worldRotationY={smoothRotateY}
+             inverseMatrix={inverseMatrix}
+             transformMatrixRaw={transformMatrixRaw}
            />
         ))}
       </MotionDiv>

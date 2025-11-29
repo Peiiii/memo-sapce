@@ -33,8 +33,7 @@ export class Presenter {
       // Reset gallery focus when entering
       useGalleryStore.getState().setFocusedIndex(0);
       // Reset rotation source if desired
-      this.sphereManager.rotationX.set(0);
-      this.sphereManager.rotationY.set(0);
+      this.sphereManager.resetRotation();
     }
   };
 }

@@ -7,11 +7,11 @@ import { Orb } from '../Orb';
 
 interface SphereOrbProps {
   memory: Memory;
-  worldRotationX: MotionValue<number>;
-  worldRotationY: MotionValue<number>;
+  inverseMatrix: MotionValue<string>;
+  transformMatrixRaw: MotionValue<number[]>;
 }
 
-export const SphereOrb: React.FC<SphereOrbProps> = ({ memory, worldRotationX, worldRotationY }) => {
+export const SphereOrb: React.FC<SphereOrbProps> = ({ memory, inverseMatrix, transformMatrixRaw }) => {
   const presenter = usePresenter();
   const { sphereRadius, isGravityMode } = useSphereStore();
 
@@ -45,63 +45,42 @@ export const SphereOrb: React.FC<SphereOrbProps> = ({ memory, worldRotationX, wo
 
   // --- 3D Projection & Depth Logic ---
   // Calculates the effective Z-depth after world rotation to determine styling.
-  // Must match the CSS transform order of the container: rotateY then rotateX.
-  // In matrix math (column vectors), this means applying Rx first, then Ry.
   const visualState = useTransform(
-    [worldRotationX, worldRotationY, animatedX, animatedY, animatedZ],
-    ([rx, ry, x, y, z]) => {
-      // Convert degrees to radians
-      const rXRad = (rx as number) * (Math.PI / 180);
-      const rYRad = (ry as number) * (Math.PI / 180);
-
-      const sinX = Math.sin(rXRad);
-      const cosX = Math.cos(rXRad);
-      const sinY = Math.sin(rYRad);
-      const cosY = Math.cos(rYRad);
-
-      // 1. Apply Rx (Rotate around X axis / Pitch)
-      // x stays same
-      // y' = y*cosX - z*sinX (not needed for Z calc)
-      // z' = y*sinX + z*cosX
-      const z1 = (y as number) * sinX + (z as number) * cosX;
-
-      // 2. Apply Ry (Rotate around Y axis / Yaw) on the result
-      // z'' = -x*sinY + z'*cosY
-      const zFinal = -(x as number) * sinY + z1 * cosY;
-
-      return zFinal;
+    [transformMatrixRaw, animatedX, animatedY, animatedZ] as MotionValue<any>[],
+    ([mat, x, y, z]: any[]) => {
+      // mat is column-major array.
+      // Z_world = m[2]*x + m[6]*y + m[10]*z + m[14]
+      // We ignore translation (m[14]) as the sphere logic centers at 0,0,0
+      const m = mat as number[];
+      const worldZ = m[2] * (x as number) + m[6] * (y as number) + m[10] * (z as number);
+      return worldZ;
     }
   );
 
   // Dynamic Styles based on Projected Depth (zFinal)
   const dynamicBlur = useTransform(visualState, (z) => {
-    // Focus distance threshold. 
-    // z > 0 is front hemisphere. We relax it a bit to z > -100 to keep side items relatively clear.
-    if (z > -50) return 'blur(0px)';
-    
-    // Fade into blur as it goes back
-    // Max blur 8px
-    const depth = Math.abs(z - (-50));
+    if ((z as number) > -50) return 'blur(0px)';
+    const depth = Math.abs((z as number) - (-50));
     const blurAmount = Math.min(8, depth / 50); 
     return `blur(${blurAmount}px)`;
   });
 
   const dynamicOpacity = useTransform(visualState, (z) => {
-    if (z > -50) return 1;
-    // Dim back items
-    return Math.max(0.3, 1 - Math.abs(z) / (sphereRadius * 1.5));
+    if ((z as number) > -50) return 1;
+    return Math.max(0.3, 1 - Math.abs(z as number) / (sphereRadius * 1.5));
   });
 
   const dynamicPointerEvents = useTransform(visualState, (z) => {
-    // Disable interaction for items in the back
-    return z > -50 ? 'auto' : 'none';
+    return (z as number) > -50 ? 'auto' : 'none';
   });
   
   const dynamicScale = useTransform([animatedScale, visualState], ([scale, z]) => {
-     // Slight perspective boost
      const depthScale = Math.max(0.5, 1 + (z as number) / 2000); 
      return (scale as number) * depthScale;
   });
+
+  // FIXED: Dynamic Z-Index based on World Z to ensure proper occlusion during rotation
+  const dynamicZIndex = useTransform(visualState, (z) => Math.floor(z as number) + 2000);
 
   // --- Drift Logic ---
   const driftOffsetX = useMotionValue(0);
@@ -124,8 +103,6 @@ export const SphereOrb: React.FC<SphereOrbProps> = ({ memory, worldRotationX, wo
   const finalY = useTransform([animatedY, driftOffsetY], ([y, dy]) => (y as number) + (dy as number));
 
   // --- Interaction ---
-  const inverseRotateX = useTransform(worldRotationX, (v: number) => -v);
-  const inverseRotateY = useTransform(worldRotationY, (v: number) => -v);
   const snapToBalance = (val: number) => Math.round(val / 360) * 360;
 
   useEffect(() => {
@@ -182,11 +159,11 @@ export const SphereOrb: React.FC<SphereOrbProps> = ({ memory, worldRotationX, wo
       x={finalX}
       y={finalY}
       z={animatedZ}
-      rotateX={useTransform([inverseRotateX, orbRotationX], ([ir, or]) => (ir as number) + (or as number))}
-      rotateY={useTransform([inverseRotateY, orbRotationY], ([ir, or]) => (ir as number) + (or as number))}
+      rotateX={orbRotationX}
+      rotateY={orbRotationY}
       scale={dynamicScale}
       opacity={dynamicOpacity}
-      zIndex={layout.zIndex}
+      zIndex={dynamicZIndex}
       isActive={isActive}
       filter={dynamicBlur}
       pointerEvents={dynamicPointerEvents}
@@ -197,6 +174,7 @@ export const SphereOrb: React.FC<SphereOrbProps> = ({ memory, worldRotationX, wo
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => !isDraggingRef.current && setIsHovered(false)}
       side="left"
+      billboardMatrix={inverseMatrix}
     />
   );
 };
