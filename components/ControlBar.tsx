@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { PlusIcon, ArrowsUpDownIcon, Square3Stack3DIcon, GlobeAsiaAustraliaIcon } from '@heroicons/react/24/outline';
 import { usePresenter } from '../hooks/usePresenter';
-import { useCommonStore } from '../stores/commonStore';
+import { useCommonStore, ViewMode } from '../stores/commonStore';
 import { useSphereStore } from '../stores/sphereStore';
 
 export const ControlBar: React.FC = () => {
@@ -9,6 +9,11 @@ export const ControlBar: React.FC = () => {
   const { viewMode, memories } = useCommonStore();
   const { isGravityMode } = useSphereStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const modes: { id: ViewMode; label: string; Icon: any }[] = [
+    { id: 'sphere', label: '宇宙', Icon: GlobeAsiaAustraliaIcon },
+    { id: 'gallery', label: '时空', Icon: Square3Stack3DIcon },
+  ];
 
   return (
     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
@@ -26,21 +31,22 @@ export const ControlBar: React.FC = () => {
         
         <div className="w-px h-8 bg-white/10"></div>
 
-        <button 
-          onClick={() => presenter.toggleViewMode()}
-          className="flex flex-col items-center group"
-        >
-           <div className={`p-3 rounded-full transition-all duration-300 border ${viewMode === 'gallery' ? 'bg-indigo-500/30 border-indigo-400/50 text-indigo-200 shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'bg-white/10 border-white/5 text-white/70 group-hover:bg-white/20'}`}>
-              {viewMode === 'sphere' ? (
-                <GlobeAsiaAustraliaIcon className="w-6 h-6" />
-              ) : (
-                <Square3Stack3DIcon className="w-6 h-6" />
-              )}
-           </div>
-           <span className={`text-[10px] mt-1 transition-colors ${viewMode === 'gallery' ? 'text-indigo-300' : 'text-white/40'}`}>
-             {viewMode === 'sphere' ? '宇宙' : '时空'}
-           </span>
-        </button>
+        <div className="flex items-center gap-2">
+          {modes.map((mode) => (
+            <button 
+              key={mode.id}
+              onClick={() => presenter.switchViewMode(mode.id)}
+              className="flex flex-col items-center group"
+            >
+              <div className={`p-3 rounded-full transition-all duration-300 border ${viewMode === mode.id ? 'bg-indigo-500/30 border-indigo-400/50 text-indigo-200 shadow-[0_0_15px_rgba(99,102,241,0.3)]' : 'bg-white/10 border-white/5 text-white/70 group-hover:bg-white/20'}`}>
+                  <mode.Icon className="w-6 h-6" />
+              </div>
+              <span className={`text-[10px] mt-1 transition-colors ${viewMode === mode.id ? 'text-indigo-300' : 'text-white/40'}`}>
+                {mode.label}
+              </span>
+            </button>
+          ))}
+        </div>
 
         {viewMode === 'sphere' && (
           <>
