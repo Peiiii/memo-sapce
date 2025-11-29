@@ -24,7 +24,8 @@ export interface OrbVisualProps {
   // Visual Props
   isActive?: boolean;
   side?: 'left' | 'right';
-  blurFilter?: string;
+  filter?: string | MotionValue<string>;
+  pointerEvents?: string | MotionValue<string>;
   
   // Events
   onPointerDown?: (e: React.PointerEvent) => void;
@@ -41,7 +42,7 @@ export interface OrbVisualProps {
 export const Orb: React.FC<OrbVisualProps> = ({
   id, url, description, timestamp,
   x, y, z, rotateX, rotateY, scale, opacity, zIndex,
-  isActive, side, blurFilter,
+  isActive, side, filter, pointerEvents,
   onPointerDown, onPointerMove, onPointerUp, onMouseEnter, onMouseLeave, onClick,
   cursor
 }) => {
@@ -52,8 +53,8 @@ export const Orb: React.FC<OrbVisualProps> = ({
       style={{
         x, y, z, 
         zIndex,
+        pointerEvents: pointerEvents || 'auto',
         transformStyle: 'preserve-3d',
-        pointerEvents: 'auto',
       }}
       onClick={onClick}
     >
@@ -74,14 +75,14 @@ export const Orb: React.FC<OrbVisualProps> = ({
            <MotionDiv 
              className={`relative overflow-hidden rounded-full border transition-all duration-500 touch-none ${cursor || ''} ${isActive ? 'border-white/70 filter-none' : 'border-white/40 opacity-90'}`}
              style={{
-               width: '140px',
-               height: '140px',
+               width: '70px',
+               height: '70px',
                boxShadow: isActive
                  ? '0 0 60px rgba(165, 243, 252, 0.5), inset 0 0 20px rgba(255,255,255,0.6)' 
-                 : '0 15px 35px rgba(0,0,0,0.2), inset 0 0 15px rgba(255,255,255,0.2)',
+                 : '0 8px 20px rgba(0,0,0,0.3), inset 0 0 10px rgba(255,255,255,0.2)',
                background: 'rgba(255, 255, 255, 0.05)',
                backdropFilter: 'blur(2px)',
-               filter: blurFilter, 
+               filter: filter || 'none', 
              }}
              onPointerDown={onPointerDown}
              onPointerMove={onPointerMove}
@@ -106,9 +107,9 @@ export const Orb: React.FC<OrbVisualProps> = ({
                style={{
                  left: side === 'left' ? '50%' : 'auto',
                  right: side === 'right' ? '50%' : 'auto',
-                 marginLeft: side === 'left' ? '80px' : 0,
-                 marginRight: side === 'right' ? '80px' : 0,
-                 y: side ? 0 : 80, // Default to bottom if no side
+                 marginLeft: side === 'left' ? '50px' : 0, 
+                 marginRight: side === 'right' ? '50px' : 0,
+                 y: side ? 0 : 50,
                  transform: side ? 'translateY(-50%)' : 'translateX(-50%)',
                  textAlign: side ? undefined : 'center',
                  alignItems: side ? undefined : 'center'

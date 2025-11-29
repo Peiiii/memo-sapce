@@ -56,7 +56,7 @@ export const GalleryOrb: React.FC<GalleryOrbProps> = ({ memory, index }) => {
       zIndex={layout.zIndex}
       isActive={layout.isActive}
       side={layout.side}
-      blurFilter={layout.blur ? `blur(${layout.blur}px)` : 'none'}
+      filter={layout.blur ? `blur(${layout.blur}px)` : 'none'}
       cursor="cursor-pointer"
       onPointerUp={handleClick}
     />

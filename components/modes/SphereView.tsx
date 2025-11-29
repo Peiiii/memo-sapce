@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, useSpring } from 'framer-motion';
 import { usePresenter } from '../../hooks/usePresenter';
 import { useCommonStore } from '../../stores/commonStore';
@@ -14,6 +14,7 @@ export const SphereView: React.FC = () => {
   const springConfig = { damping: 20, stiffness: 100, mass: 1 };
   const smoothRotateX = useSpring(presenter.sphereManager.rotationX, springConfig);
   const smoothRotateY = useSpring(presenter.sphereManager.rotationY, springConfig);
+  const smoothScale = useSpring(presenter.sphereManager.sphereScale, { damping: 20, stiffness: 120 });
 
   // Drag Handlers for World Rotation
   const isDragging = useRef(false);
@@ -21,8 +22,6 @@ export const SphereView: React.FC = () => {
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) return;
-    // Don't capture if clicking an orb (let orb handle it), but here we handle background drag
-    // Ideally Orb handles its own, and propagation stops. If it bubbles, we rotate world.
     isDragging.current = true;
     lastMousePos.current = { x: e.clientX, y: e.clientY };
     if (containerRef.current) containerRef.current.style.cursor = 'grabbing';
@@ -41,6 +40,22 @@ export const SphereView: React.FC = () => {
     if (containerRef.current) containerRef.current.style.cursor = 'grab';
   };
 
+  // Wheel Handler for Zoom
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      presenter.sphereManager.handleZoom(e.deltaY);
+    };
+
+    const el = containerRef.current;
+    if (el) {
+      el.addEventListener('wheel', handleWheel, { passive: false });
+    }
+    return () => {
+      if (el) el.removeEventListener('wheel', handleWheel);
+    };
+  }, [presenter]);
+
   return (
     <div 
       ref={containerRef}
@@ -56,11 +71,12 @@ export const SphereView: React.FC = () => {
         style={{ 
           rotateX: smoothRotateX, 
           rotateY: smoothRotateY,
+          scale: smoothScale,
           transformStyle: 'preserve-3d', 
           width: 0, 
           height: 0 
         }}
-        transformTemplate={({ rotateX, rotateY }: any) => `rotateY(${rotateY}) rotateX(${rotateX})`}
+        transformTemplate={({ rotateX, rotateY, scale }: any) => `scale(${scale}) rotateY(${rotateY}) rotateX(${rotateX})`}
       >
         {memories.map((memory) => (
            <SphereOrb 
