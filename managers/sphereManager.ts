@@ -1,10 +1,12 @@
 import { motionValue, MotionValue } from 'framer-motion';
 import { useSphereStore } from '../stores/sphereStore';
+import { useCommonStore } from '../stores/commonStore';
 import { Memory, OrbLayout } from '../types';
 
 export class SphereManager {
   public rotationX: MotionValue<number>;
   public rotationY: MotionValue<number>;
+  private unsubMemories?: () => void;
 
   constructor() {
     this.rotationX = motionValue(0);
@@ -14,15 +16,39 @@ export class SphereManager {
   init = () => {
     this.handleResize();
     window.addEventListener('resize', this.handleResize);
+    // Subscribe to memory changes to adaptively resize the sphere
+    this.unsubMemories = useCommonStore.subscribe(
+      (state) => state.memories,
+      () => this.handleResize()
+    );
   };
 
   dispose = () => {
     window.removeEventListener('resize', this.handleResize);
+    if (this.unsubMemories) this.unsubMemories();
   };
 
   handleResize = () => {
-    const r = Math.min(window.innerWidth, window.innerHeight) * 0.48;
-    useSphereStore.getState().setSphereRadius(Math.max(350, r));
+    // Basic screen fitting radius
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const baseRadius = Math.min(width, height) * 0.45;
+
+    // Adaptive Scaling Factor
+    // As items increase, we expand the radius to keep density relatively stable,
+    // but we clamp it to prevent items from clipping through the camera (perspective 1200px)
+    const memories = useCommonStore.getState().memories;
+    const count = Math.max(20, memories.length); // Baseline ~20 items
+    
+    // Density logic: Surface area 4*pi*r^2. To keep items/area constant: r ~ sqrt(N)
+    const densityFactor = Math.sqrt(count / 20);
+    
+    // Apply factor to base radius, but clamp between a minimum and a safe maximum
+    // Perspective is 1200px, so we shouldn't go too close to that (e.g. 850px)
+    let targetRadius = baseRadius * densityFactor;
+    targetRadius = Math.max(350, Math.min(850, targetRadius));
+
+    useSphereStore.getState().setSphereRadius(targetRadius);
   };
 
   toggleGravityMode = () => {

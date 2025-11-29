@@ -89,6 +89,153 @@ const RAW_MEMORY_DATA = [
     scale: 0.98,
     rotation: -6,
   },
+  {
+    id: 'mem-mountain',
+    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop',
+    description: "群山静默，守望着千年的秘密。",
+    scale: 1.1,
+    rotation: -3,
+  },
+  {
+    id: 'mem-road',
+    url: 'https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?q=80&w=600&auto=format&fit=crop',
+    description: "路在脚下延伸，通向未知的远方。",
+    scale: 0.95,
+    rotation: 7,
+  },
+  {
+    id: 'mem-desert',
+    url: 'https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?q=80&w=600&auto=format&fit=crop',
+    description: "风在沙丘上刻画时间的形状。",
+    scale: 1.05,
+    rotation: 2,
+  },
+  {
+    id: 'mem-lake',
+    url: 'https://images.unsplash.com/photo-1439853949127-fa647821eba0?q=80&w=600&auto=format&fit=crop',
+    description: "湖面如镜，倒映着灵魂的深处。",
+    scale: 1.0,
+    rotation: -5,
+  },
+  {
+    id: 'mem-autumn',
+    url: 'https://images.unsplash.com/photo-1477414348463-c0eb7f1359b6?q=80&w=600&auto=format&fit=crop',
+    description: "落叶纷飞，是季节最后的告别。",
+    scale: 1.12,
+    rotation: 9,
+  },
+  {
+    id: 'mem-crowd',
+    url: 'https://images.unsplash.com/photo-1533038590840-1cde6e668a91?q=80&w=600&auto=format&fit=crop',
+    description: "人潮汹涌，每个人都是一座孤岛。",
+    scale: 0.93,
+    rotation: -12,
+  },
+  {
+    id: 'mem-window',
+    url: 'https://images.unsplash.com/photo-1508144753681-9986d4df99b3?q=80&w=600&auto=format&fit=crop',
+    description: "窗外的世界，总是比梦境更真实。",
+    scale: 1.08,
+    rotation: 4,
+  },
+  {
+    id: 'mem-camera',
+    url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=600&auto=format&fit=crop',
+    description: "快门按下，此刻便成了永恒。",
+    scale: 1.0,
+    rotation: -7,
+  },
+  {
+    id: 'mem-bridge',
+    url: 'https://images.unsplash.com/photo-1506461883276-594a12b11cf3?q=80&w=600&auto=format&fit=crop',
+    description: "连接彼岸的，不只是桥梁。",
+    scale: 1.06,
+    rotation: 6,
+  },
+  {
+    id: 'mem-train',
+    url: 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?q=80&w=600&auto=format&fit=crop',
+    description: "汽笛声响，带着思念去往远方。",
+    scale: 0.98,
+    rotation: 10,
+  },
+  {
+    id: 'mem-beach-2',
+    url: 'https://images.unsplash.com/photo-1496275068113-fff8c90750d1?q=80&w=600&auto=format&fit=crop',
+    description: "脚印被海浪抹去，但大海记得一切。",
+    scale: 1.03,
+    rotation: -2,
+  },
+  {
+    id: 'mem-bicycle',
+    url: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?q=80&w=600&auto=format&fit=crop',
+    description: "车轮转动，那是青春呼啸而过的声音。",
+    scale: 0.96,
+    rotation: 5,
+  },
+  {
+    id: 'mem-piano',
+    url: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?q=80&w=600&auto=format&fit=crop',
+    description: "黑白键上，跳动着未曾说出口的话。",
+    scale: 1.04,
+    rotation: -6,
+  },
+  {
+    id: 'mem-clock',
+    url: 'https://images.unsplash.com/photo-1508057198894-247b23fe5ade?q=80&w=600&auto=format&fit=crop',
+    description: "指针不停，时间是唯一的旁观者。",
+    scale: 1.1,
+    rotation: -11,
+  },
+  {
+    id: 'mem-vinyl',
+    url: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=600&auto=format&fit=crop',
+    description: "唱针划过，旧时光缓缓流淌。",
+    scale: 1.02,
+    rotation: 3,
+  },
+  {
+    id: 'mem-letter',
+    url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600&auto=format&fit=crop',
+    description: "纸短情长，字迹里藏着温度。",
+    scale: 0.97,
+    rotation: -4,
+  },
+  {
+    id: 'mem-clouds',
+    url: 'https://images.unsplash.com/photo-1501630834273-4b5604d2ee31?q=80&w=600&auto=format&fit=crop',
+    description: "云卷云舒，是天空最温柔的心事。",
+    scale: 1.13,
+    rotation: -8,
+  },
+  {
+    id: 'mem-guitar',
+    url: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?q=80&w=600&auto=format&fit=crop',
+    description: "琴弦震动，诉说着无言的心事。",
+    scale: 0.95,
+    rotation: -5,
+  },
+  {
+    id: 'mem-camp',
+    url: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?q=80&w=600&auto=format&fit=crop',
+    description: "篝火跳动，温暖了寒冷的夜。",
+    scale: 1.05,
+    rotation: 6,
+  },
+  {
+    id: 'mem-aurora',
+    url: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?q=80&w=600&auto=format&fit=crop',
+    description: "极光漫舞，那是天空的梦境。",
+    scale: 1.15,
+    rotation: -7,
+  },
+  {
+    id: 'mem-sakura',
+    url: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?q=80&w=600&auto=format&fit=crop',
+    description: "樱花飘落，秒速五厘米的思念。",
+    scale: 1.08,
+    rotation: -6,
+  },
 ];
 
 export class MemoryManager {
@@ -98,7 +245,7 @@ export class MemoryManager {
       const pos = this.getFibonacciPos(index, RAW_MEMORY_DATA.length);
       return {
         ...data,
-        timestamp: Date.now() - index * 86400000 * 10,
+        timestamp: Date.now() - index * 86400000 * 2, // Spaced out over time
         theta: pos.theta,
         phi: pos.phi,
         driftSpeed: 0.8 + Math.random() * 0.4,
@@ -159,9 +306,6 @@ export class MemoryManager {
     }
 
     useCommonStore.getState().setMemories(prev => [...prev, ...newMemories]);
-    // Note: Focusing logic is now the responsibility of GalleryManager, handled via event listeners or direct updates if needed.
-    // However, if we want to reset gallery focus on upload, we should do it here if MemoryManager knows about Gallery.
-    // For strict decoupling, we might emit an event, but for this MVP, we will let Gallery observe changes or the user manually navigate.
   };
 
   getSortedMemories = (memories: Memory[]) => {
