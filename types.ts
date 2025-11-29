@@ -18,3 +18,17 @@ export interface Coordinates {
   x: number;
   y: number;
 }
+
+export interface OrbLayout {
+  x: number;
+  y: number;
+  z: number;
+  rotateX: number;
+  rotateY: number;
+  scale: number;
+  opacity: number;
+  zIndex: number;
+  blur: number;
+  isActive: boolean;
+  side?: 'left' | 'right'; // For text alignment in gallery
+}
