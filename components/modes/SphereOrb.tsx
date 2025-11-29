@@ -70,8 +70,8 @@ export const SphereOrb: React.FC<SphereOrbProps> = ({ memory, worldRotationX, wo
     animate(driftOffsetY, [0, driftY, -driftY, 0], { duration: duration * 1.3, repeat: Infinity, ease: "easeInOut" });
   }, [driftX, driftY, duration, isHovered, isDragging, driftOffsetX, driftOffsetY]);
 
-  const finalX = useTransform([animatedX, driftOffsetX], ([x, dx]) => x + dx);
-  const finalY = useTransform([animatedY, driftOffsetY], ([y, dy]) => y + dy);
+  const finalX = useTransform([animatedX, driftOffsetX], ([x, dx]) => (x as number) + (dx as number));
+  const finalY = useTransform([animatedY, driftOffsetY], ([y, dy]) => (y as number) + (dy as number));
 
   // Interaction
   const snapToBalance = (val: number) => Math.round(val / 360) * 360;
@@ -130,8 +130,8 @@ export const SphereOrb: React.FC<SphereOrbProps> = ({ memory, worldRotationX, wo
       x={finalX}
       y={finalY}
       z={animatedZ}
-      rotateX={useTransform([inverseRotateX, orbRotationX], ([ir, or]) => ir + or)}
-      rotateY={useTransform([inverseRotateY, orbRotationY], ([ir, or]) => ir + or)}
+      rotateX={useTransform([inverseRotateX, orbRotationX], ([ir, or]) => (ir as number) + (or as number))}
+      rotateY={useTransform([inverseRotateY, orbRotationY], ([ir, or]) => (ir as number) + (or as number))}
       scale={animatedScale}
       opacity={animatedOpacity}
       zIndex={layout.zIndex}

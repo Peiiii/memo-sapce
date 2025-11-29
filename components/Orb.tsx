@@ -48,7 +48,7 @@ export const Orb: React.FC<OrbVisualProps> = ({
   return (
     <MotionDiv
       layoutId={`orb-${id}`}
-      className="absolute top-1/2 left-1/2 flex items-center justify-center touch-none"
+      className="absolute top-1/2 left-1/2 w-0 h-0 flex items-center justify-center touch-none"
       style={{
         x, y, z, 
         zIndex,
