@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Memory } from '../types';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { motion, useMotionValue, useTransform, useSpring, animate } from 'framer-motion';
 
 // Cast motion.div to any to avoid type errors with 'initial' prop in some environments
 const MotionDiv = motion.div as any;
@@ -42,13 +42,12 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
   onClick
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Local rotation state for "Planet Spin" (Sphere mode only)
+  // We use raw MotionValues directly for 1:1 response (no spring physics during drag)
   const orbRotationX = useMotionValue(0);
   const orbRotationY = useMotionValue(0);
-  const springConfig = { damping: 20, stiffness: 120, mass: 0.5 };
-  const smoothOrbX = useSpring(orbRotationX, springConfig);
-  const smoothOrbY = useSpring(orbRotationY, springConfig);
 
   // Gallery Mode Springs for smooth transition
   const galleryX = useSpring(0, { stiffness: 100, damping: 20 });
@@ -80,8 +79,9 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
   // Reset/Snap rotation when Gravity Mode is enabled
   useEffect(() => {
     if (isGravityMode) {
-      orbRotationX.set(snapToBalance(orbRotationX.get()));
-      orbRotationY.set(snapToBalance(orbRotationY.get()));
+      // Smoothly animate to balance when mode is toggled
+      animate(orbRotationX, snapToBalance(orbRotationX.get()), { type: 'spring', stiffness: 200, damping: 25 });
+      animate(orbRotationY, snapToBalance(orbRotationY.get()), { type: 'spring', stiffness: 200, damping: 25 });
     }
   }, [isGravityMode, orbRotationX, orbRotationY]);
 
@@ -89,7 +89,14 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
     if (viewMode === 'gallery') return; // Disable drag rotation in gallery mode
     e.preventDefault();
     e.stopPropagation();
+    
     isDraggingRef.current = true;
+    setIsDragging(true);
+    
+    // Stop any ongoing animations (e.g. gravity snap) so user takes full control immediately
+    orbRotationX.stop();
+    orbRotationY.stop();
+    
     lastPos.current = { x: e.clientX, y: e.clientY };
     (e.target as Element).setPointerCapture(e.pointerId);
   };
@@ -103,8 +110,12 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
     const deltaY = e.clientY - lastPos.current.y;
     lastPos.current = { x: e.clientX, y: e.clientY };
 
-    orbRotationY.set(orbRotationY.get() + deltaX * 0.6);
-    orbRotationX.set(orbRotationX.get() - deltaY * 0.6);
+    // Sensitivity adjusted to 1.2 for "Physical Grip" feel (approx 1:1 with surface arc)
+    const sensitivity = 1.2; 
+    
+    // Direct set without spring for zero latency
+    orbRotationY.set(orbRotationY.get() - deltaX * sensitivity);
+    orbRotationX.set(orbRotationX.get() - deltaY * sensitivity);
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -114,13 +125,16 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
     }
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
+    setIsDragging(false);
+    
     e.preventDefault();
     e.stopPropagation();
     (e.target as Element).releasePointerCapture(e.pointerId);
 
     if (isGravityMode) {
-      orbRotationX.set(snapToBalance(orbRotationX.get()));
-      orbRotationY.set(snapToBalance(orbRotationY.get()));
+      // Manually trigger smooth snap-back on release if Gravity is ON
+      animate(orbRotationX, snapToBalance(orbRotationX.get()), { type: 'spring', stiffness: 200, damping: 25 });
+      animate(orbRotationY, snapToBalance(orbRotationY.get()), { type: 'spring', stiffness: 200, damping: 25 });
     }
   };
 
@@ -140,12 +154,13 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
 
   // Visual Size Logic
   const BASE_SCALE = memory.scale;
-  const HOVER_SCALE_MULTIPLIER = 2.2;
+  // Reduced hover scale multiplier for more subtle effect (Was 1.5)
+  const HOVER_SCALE_MULTIPLIER = 1.2;
   
   // In gallery mode, we use the passed scale, in sphere we calculate based on hover
   const activeScale = viewMode === 'gallery' 
     ? galleryScale 
-    : (isHovered ? BASE_SCALE * HOVER_SCALE_MULTIPLIER : BASE_SCALE);
+    : (isHovered || isDragging ? BASE_SCALE * HOVER_SCALE_MULTIPLIER : BASE_SCALE);
 
   // Position Logic
   const x = viewMode === 'gallery' ? galleryX : sphereX;
@@ -153,20 +168,29 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
   const z = viewMode === 'gallery' ? galleryZ : sphereZ;
 
   // Rotation Logic
-  // In Sphere mode: we apply inverse world rotation to billboard the image.
-  // In Gallery mode: we apply the specific gallery angle (rotateY) directly.
+  // In Sphere Mode: we apply inverse world rotation to billboard the image.
   const finalRotateX = viewMode === 'gallery' ? 0 : inverseRotateX; 
-  const finalRotateY = viewMode === 'gallery' ? 0 : inverseRotateY; // We will handle gallery rotation in a wrapper
+  const finalRotateY = viewMode === 'gallery' ? 0 : inverseRotateY; 
 
   // Blur Logic for Gallery
   const blurFilter = viewMode === 'gallery' && galleryAttrs?.blur ? `blur(${galleryAttrs.blur}px)` : 'none';
 
+  // Ensure positive Z-Index for reliable interaction
+  // When dragging, we boost Z to 5000 to ensure it doesn't clip through neighbors
+  const zIndexVal = viewMode === 'gallery' && galleryAttrs?.isActive 
+    ? 10000 
+    : (isDragging ? 5000 : (
+        viewMode === 'gallery' 
+        ? 1000 - (galleryAttrs?.blur || 0) * 10 
+        : Math.floor(sphereZ) + 2000
+      )); 
+
   return (
     <MotionDiv
-      className="absolute top-1/2 left-1/2 flex items-center justify-center"
+      className="absolute top-1/2 left-1/2 flex items-center justify-center touch-none"
       style={{
         x, y, z, // Direct motion value mapping
-        zIndex: viewMode === 'gallery' && galleryAttrs?.isActive ? 10000 : (viewMode === 'gallery' ? 1000 - (galleryAttrs?.blur || 0) * 10 : Math.floor(sphereZ)), // Simple Z-sorting
+        zIndex: zIndexVal,
         transformStyle: 'preserve-3d',
         pointerEvents: 'auto',
       }}
@@ -185,10 +209,8 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
         }}
         transformTemplate={({ rotateX, rotateY }: any) => {
           if (viewMode === 'gallery') {
-            // In gallery, we just want simple local rotation
             return `rotateY(${rotateY})`;
           }
-          // In sphere, we need the specific inverse order
           return `rotateX(${rotateX}) rotateY(${rotateY})`;
         }}
         className="relative"
@@ -199,10 +221,10 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
           animate={{ 
             opacity: viewMode === 'gallery' ? galleryAttrs?.opacity || 1 : 1,
             scale: activeScale,
-            // Disable drift in Gallery Mode
-            x: (viewMode === 'gallery' || isHovered) ? 0 : [0, driftX, -driftX, 0],
-            y: (viewMode === 'gallery' || isHovered) ? 0 : [0, driftY, -driftY, 0],
-            rotate: (viewMode === 'gallery' || isHovered) ? 0 : [memory.rotation - 2, memory.rotation + 2, memory.rotation - 2],
+            // Disable drift in Gallery Mode OR when interacting
+            x: (viewMode === 'gallery' || isHovered || isDragging) ? 0 : [0, driftX, -driftX, 0],
+            y: (viewMode === 'gallery' || isHovered || isDragging) ? 0 : [0, driftY, -driftY, 0],
+            rotate: (viewMode === 'gallery' || isHovered || isDragging) ? 0 : [memory.rotation - 2, memory.rotation + 2, memory.rotation - 2],
           }}
           transition={{
             opacity: { duration: 1 },
@@ -223,15 +245,16 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
         >
            {/* Image Container */}
            <MotionDiv 
-             className={`relative overflow-hidden rounded-full border transition-all duration-500 cursor-grab ${isDraggingRef.current ? 'cursor-grabbing' : ''} ${viewMode === 'gallery' ? 'cursor-pointer' : ''} ${(isHovered || (viewMode === 'gallery' && galleryAttrs?.isActive)) ? 'border-white/70 filter-none' : 'border-white/40 opacity-90'}`}
+             className={`relative overflow-hidden rounded-full border transition-all duration-500 touch-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${viewMode === 'gallery' ? 'cursor-pointer' : ''} ${(isHovered || isDragging || (viewMode === 'gallery' && galleryAttrs?.isActive)) ? 'border-white/70 filter-none' : 'border-white/40 opacity-90'}`}
              style={{
                width: '140px',
                height: '140px',
-               boxShadow: (isHovered || (viewMode === 'gallery' && galleryAttrs?.isActive))
+               boxShadow: (isHovered || isDragging || (viewMode === 'gallery' && galleryAttrs?.isActive))
                  ? '0 0 60px rgba(165, 243, 252, 0.5), inset 0 0 20px rgba(255,255,255,0.6)' 
                  : '0 15px 35px rgba(0,0,0,0.2), inset 0 0 15px rgba(255,255,255,0.2)',
-               rotateX: viewMode === 'sphere' ? smoothOrbX : 0,
-               rotateY: viewMode === 'sphere' ? smoothOrbY : 0,
+               // Use raw MotionValues here for direct 1:1 control without physics
+               rotateX: viewMode === 'sphere' ? orbRotationX : 0,
+               rotateY: viewMode === 'sphere' ? orbRotationY : 0,
                background: 'rgba(255, 255, 255, 0.05)',
                backdropFilter: 'blur(2px)',
                filter: blurFilter, // Apply Distance Blur
@@ -240,19 +263,19 @@ export const MemoryOrb: React.FC<MemoryOrbProps> = ({
              onPointerMove={handlePointerMove}
              onPointerUp={handlePointerUp}
            >
-             <div className={`absolute inset-0 rounded-full bg-gradient-to-br from-white/40 via-transparent to-black/10 z-30 pointer-events-none mix-blend-overlay transition-opacity duration-500 ${(isHovered || (viewMode === 'gallery' && galleryAttrs?.isActive)) ? 'opacity-0' : 'opacity-100'}`}></div>
+             <div className={`absolute inset-0 rounded-full bg-gradient-to-br from-white/40 via-transparent to-black/10 z-30 pointer-events-none mix-blend-overlay transition-opacity duration-500 ${(isHovered || isDragging || (viewMode === 'gallery' && galleryAttrs?.isActive)) ? 'opacity-0' : 'opacity-100'}`}></div>
 
               <img 
                 src={memory.url} 
                 alt="memory" 
                 className="relative w-full h-full object-cover z-10 pointer-events-none transition-transform duration-700 ease-out"
-                style={{ transform: (isHovered || (viewMode === 'gallery' && galleryAttrs?.isActive)) ? 'scale(1.1)' : 'scale(1.05)' }} 
+                style={{ transform: (isHovered || isDragging || (viewMode === 'gallery' && galleryAttrs?.isActive)) ? 'scale(1.1)' : 'scale(1.05)' }} 
                 draggable={false}
               />
             </MotionDiv>
 
             {/* Sphere Mode: Text Reveal on Hover */}
-            {viewMode === 'sphere' && isHovered && !memory.isAnalyzing && (
+            {viewMode === 'sphere' && (isHovered || isDragging) && !memory.isAnalyzing && (
               <MotionDiv 
                 initial={{ opacity: 0, y: 10, scale: 0.5 }}
                 animate={{ opacity: 1, y: 0, scale: 1.0 / HOVER_SCALE_MULTIPLIER }}
